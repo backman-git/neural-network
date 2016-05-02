@@ -1,7 +1,25 @@
 import random
 from enum import Enum
 import numpy as np
+from numpy import linalg as LA
 import itertools
+import math
+
+
+
+
+
+
+def linearFunction(v):
+	return v
+
+
+
+
+
+
+
+
 
 
 class Neuron:
@@ -9,10 +27,11 @@ class Neuron:
 	def __init__(self,numberOfIn):
 
 		self.listOfWeightIn=[]
+		self.Afunction=linearFunction
 		
 		for i in range(numberOfIn):
 			#r=random.random()
-			r=1
+			r=1.0
 			self.listOfWeightIn.append(r)
 		
 
@@ -23,11 +42,25 @@ class Neuron:
 	def setListOfWeightIn(self,listOfWeightIn):
 		self.listOfWeightIn= listOfWeightIn;
 
+	def setActiveFunction(self,func):
+		self.Afunction =func
+
+	def getActiveFunction(self):
+		return self.Afunction
 
 	def pt(self):
 
 		print "Input Weights: " +str(self.listOfWeightIn)
 		#print "output Weights: "+str(self.listOfWeightOut)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -125,6 +158,12 @@ class LayerFactory:
 		self.nNeuron=n
 		return self
 
+
+	# active function (all neurons are same ) may need change
+	def activeFunc(self,f):
+		self.aFunc= f
+		return self
+
 	def getLayer(self):
 
 		#build neuronin_layer=InputLayer()
@@ -200,8 +239,17 @@ class NeuralNet:
 
 	def setOutputlayer(self,layer):
 		self.outputLayer=layer
+	def getOutputlayer(self):
+		return self.outputLayer
+
+
+
 	def setHiddenlayerCollection(self,layers):
 		self.hiddenLayerCollection=layers
+
+
+	def getHiddenlayerCollection(self):
+		return self.hiddenLayerCollection
 
 
 	def input(self,vector):
@@ -234,8 +282,14 @@ class NeuralNet:
 			neurons=obj.getListOfNeurons()
 			computeResV=[]
 			for n in neurons:
+				#netValue
 				neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
+				#activeFunction
+				aFunc=n.getActiveFunction()
+				neuronRes = aFunc(neuronRes)
 				computeResV.append(neuronRes)
+
+
 			hiddenComputeV=computeResV[:]
 
 		print "\n=== hidden layer result"
@@ -245,10 +299,18 @@ class NeuralNet:
 		neurons=self.outputLayer.getListOfNeurons()
 		computeResV=[]
 		for n in neurons:
+			#netValue
 			neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
+			#activeFunction
+			aFunc=n.getActiveFunction()
+			neuronRes = aFunc(neuronRes)
+
 			computeResV.append(neuronRes)
 		print "\n=== outLayer result==="
 		print computeResV
+
+
+		return computeResV
 
 		
 
@@ -285,17 +347,16 @@ class NeuralNet:
 class TrainSet:
 
 	def __init__(self):
-		self.x=[]
-		self.y=[]
+		pass
 
-	def set_X(self,obj):
-		self.x.append(x)
-	def set_Y(self,obj):
-		self.y.append(y)
+	def setX(self,x):
+		self.x=x
+	def setY(self,y):
+		self.y=y
 
-	def get_setX(self):
+	def getSetX(self):
 		return self.x
-	def get_setY(self):
+	def getSetY(self):
 		return self.y
 
 
@@ -304,11 +365,12 @@ class TrainSet:
 
 
 
-class Training:
+class Trainer:
 
+	def __init__(self):
+		
+		self.error=0
 
-	def getEpochs(self):
-		return self.epochs
 
 	def setMaxEpochs(self,val):
 		self.maxEpochs = val
@@ -322,6 +384,14 @@ class Training:
 	def getTrainSet(self):
 		return self.trainSet
 
+	def setTargetError(self,error):
+		self.targetError=error
+	def getCurrentError(self):
+		return self.error
+
+	
+
+
 
 
 	class LearningType(Enum):
@@ -330,21 +400,59 @@ class Training:
 
 
 
+	def teachLayer(self,layer):
+
+
+		pass
+
+
+
+
 	def train(self,neuralNet):
 
+		epochs=0
+		while epochs < self.getMaxEpochs():
 
-		while self.getEpochs() < self.getMaxEpochs():
-
-
-			setX= self.getTrainSet().get_setX
-
+			setX= self.getTrainSet().getSetX()
+			setY= self.getTrainSet().getSetY()
+			result=0
+			indexY=0
 			for vectorX in setX:
-				neuralNet.setInput(vectorX)
-				neuralNet.compute()
-			
-			
+
+				print vectorX
+				neuralNet.input(vectorX)
+				result=neuralNet.compute()
+				
+
+				print str(epochs)+" "+str(result)
+				#error
+				
+				self.error=  LA.norm( (np.array(result)-np.array(setY[indexY])) )
+				print self.error
+				if self.getCurrentError() > self.targetError:
+
+					#input layer
+					#neuralNet.setInputLayer(self.teachLayer(neuralNet.getInputLayer()))
+					#output layer
+					#neuralNet.setOutputlayer(self.teachLayer(neuralNet.getOutputlayer()))
+
+					hiddenColl = neuralNet.getHiddenlayerCollection()
+
+					#hidden layer
+					newHiddenColl = hiddenLayerCollection()
+					for layer in hiddenColl:	
+						newHiddenColl.append(self.teachLayer(layer))
+					neuralNet.setHiddenlayerCollection(newHiddenColl)
 
 
+
+
+						
+
+
+				indexY+=1
+
+			epochs+=1
 
 
 
@@ -355,18 +463,30 @@ if __name__ =='__main__':
 	layerFactory = LayerFactory()
 	nn=NeuralNet()
 
-	nn.setInputLayer(layerFactory.type("input").neurons(4).tips(1).getLayer())
-	nn.setOutputlayer(layerFactory.type("output").neurons(1).tips(2).getLayer())
+	nn.setInputLayer(layerFactory.type("input").neurons(3).activeFunc(linearFunction).tips(1).getLayer())
+	nn.setOutputlayer(layerFactory.type("output").neurons(1).activeFunc(linearFunction).tips(1).getLayer())
 
 	hidden_collection = HiddenLayerCollection()
-	hidden_collection.append(layerFactory.type("hidden").neurons(3).tips(4).getLayer())
-	hidden_collection.append(layerFactory.type("hidden").neurons(2).tips(3).getLayer())
+	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(3).getLayer())
+	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(1).getLayer())
 
 
 	nn.setHiddenlayerCollection(hidden_collection)
-	nn.pt()
-	nn.input([1,2,3,4])
-	nn.compute()
+	#nn.pt()
+	#nn.input([1,2,3,4])
+	#nn.compute()
+
+	trainer = Trainer()
+
+	trainSet = TrainSet()
+	trainSet.setX([[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,0.0],[1.0,1.0,1.0]])
+	trainSet.setY([0.0,0.0,0.0,1.0])
+	trainer.setTrainSet(trainSet)
+	trainer.setMaxEpochs(10)
+	trainer.setTargetError(1.0)
+	trainer.train(nn)
+
+
 
 
 	
