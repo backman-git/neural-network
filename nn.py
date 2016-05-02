@@ -12,7 +12,7 @@ class Neuron:
 		
 		for i in range(numberOfIn):
 			#r=random.random()
-			r=2
+			r=1
 			self.listOfWeightIn.append(r)
 		
 
@@ -45,8 +45,9 @@ class Layer:
 		return self.listOfNeurons
 
 
-	def setListOfNeurons(self):
-		self.listOfNeurons = listOfNeurons
+	def setListOfNeurons(self,neurons):
+		self.listOfNeurons = neurons
+
 
 
 	def appendNeuron(self,neuron):
@@ -109,12 +110,11 @@ class OutputLayer(Layer):
 class LayerFactory:
 
 	def __init__(self):
-		self.type=""
 		self.nTipOfNeuron=0
 		self.nNeuron=0
-
+		self.typeOfLayer=""
 	def type(self,t):
-		self.type=t
+		self.typeOfLayer=t
 		return self
 
 	def tips(self,n):
@@ -127,12 +127,26 @@ class LayerFactory:
 
 	def getLayer(self):
 
-		if self.type == "input":
-			return 
+		#build neuronin_layer=InputLayer()
+		listOfNeurons=[]
+		for i in range(self.nNeuron):
+			listOfNeurons.append(Neuron(self.nTipOfNeuron))
+		
+		if self.typeOfLayer == "input":
+			iLayer =  InputLayer()
+			iLayer.setListOfNeurons(listOfNeurons)
+			return iLayer
 
-		elif self.type =="output":
-
-		else self.type =="hidden"
+		elif self.typeOfLayer =="output":
+			oLayer = OutputLayer()
+			oLayer.setListOfNeurons(listOfNeurons)
+			return oLayer
+		elif self.typeOfLayer =="hidden":
+			hLayer = HiddenLayer()
+			hLayer.setListOfNeurons(listOfNeurons)
+			return hLayer
+		else :
+			return None
 
 
 
@@ -150,23 +164,6 @@ class HiddenLayerCollection(list):
 			print "Hidden Layer #"+str(n)
 			n+=1
 			layer.pt()
-
-
-
-class HiddenLayerCollection(list):
-
-
-
-
-	def pt(self):
-		print ("+++ HIDDEN LAYERS+++\n")
-
-		n=1
-		for layer in self:
-			print "Hidden Layer #"+str(n)
-			n+=1
-			layer.pt()
-
 
 
 
@@ -222,11 +219,11 @@ class NeuralNet:
 		inputLayerRes=list(np.array(self.inputVector)*np.array(vector))
 
 
-		print "inputvector"
+		print "\ninputvector"
 		print self.inputVector
-		print "inputlayer"
+		print "\ninputlayer"
 		print vector
-		print "==inputlayer result=="
+		print "\n==inputlayer result=="
 		print inputLayerRes
 
 
@@ -240,7 +237,8 @@ class NeuralNet:
 				neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 				computeResV.append(neuronRes)
 			hiddenComputeV=computeResV[:]
-		print "=== hidden layer result"
+
+		print "\n=== hidden layer result"
 		print hiddenComputeV
 
 #output layer
@@ -249,7 +247,7 @@ class NeuralNet:
 		for n in neurons:
 			neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 			computeResV.append(neuronRes)
-		print "=== outLayer result==="
+		print "\n=== outLayer result==="
 		print computeResV
 
 		
@@ -354,65 +352,24 @@ class Training:
 
 if __name__ =='__main__':
 
-	nn = NeuralNet() 
-
-	
-
-	
-
-
-	in_layer=InputLayer()
-	for i in range(4):
-		n = Neuron(1)
-		in_layer.appendNeuron(n)
-
-	in_layer.pt()
-
-	out_layer=OutputLayer()
-	for i in range(1):
-		n = Neuron(1)
-		out_layer.appendNeuron(n)
-	out_layer.pt()
-
-	
-
-	hidden_collection=HiddenLayerCollection()
-	
-	hidden_layer = HiddenLayer()
-	for j in range(5):
-		n = Neuron(4)
-		hidden_layer.appendNeuron(n)
-
-	hidden_collection.append(hidden_layer)
-
-	hidden_layer2 = HiddenLayer()
-
-	for j in range(2):
-		n = Neuron(5)
-		hidden_layer2.appendNeuron(n)
-
-	hidden_collection.append(hidden_layer2)
-
-
-
-
-
-		
-
-	hidden_collection.pt()
-
-	print in_layer.getListOfNeurons()
-
+	layerFactory = LayerFactory()
 	nn=NeuralNet()
 
-	nn.setInputLayer(in_layer)
-	nn.setOutputlayer(out_layer)
+	nn.setInputLayer(layerFactory.type("input").neurons(4).tips(1).getLayer())
+	nn.setOutputlayer(layerFactory.type("output").neurons(1).tips(2).getLayer())
+
+	hidden_collection = HiddenLayerCollection()
+	hidden_collection.append(layerFactory.type("hidden").neurons(3).tips(4).getLayer())
+	hidden_collection.append(layerFactory.type("hidden").neurons(2).tips(3).getLayer())
+
+
 	nn.setHiddenlayerCollection(hidden_collection)
 	nn.pt()
 	nn.input([1,2,3,4])
 	nn.compute()
 
 
+	
 
 
 
