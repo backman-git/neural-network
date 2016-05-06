@@ -28,12 +28,17 @@ class Neuron:
 
 		self.listOfWeightIn=[]
 		self.Afunction=linearFunction
+		self.numberOfIn = numberOfIn
 		
 		for i in range(numberOfIn):
 			#r=random.random()
 			r=1.0
 			self.listOfWeightIn.append(r)
 		
+
+	def getNumberOfIn(self):
+		return self.numberOfIn
+
 
 	def getListOfWeightIn(self):
 
@@ -278,7 +283,7 @@ class NeuralNet:
 # hidden layer
 		
 		hiddenComputeV=inputLayerRes[:]
-		for obj in self.hiddenLayerCollection:
+		for obj in self.hiddenLayerCollection :
 			neurons=obj.getListOfNeurons()
 			computeResV=[]
 			for n in neurons:
@@ -389,21 +394,50 @@ class Trainer:
 	def getCurrentError(self):
 		return self.error
 
-	
-
-
-
 
 	class LearningType(Enum):
 		PERCEPTRON =0
 		ADALINE =1
 
+	def setTrainType(self,tType):
+
+		if tType =="PERCEPTRON":
+			self.trainType = self.LearningType.PERCEPTRON
+		elif tType == "ADALINE":
+			self.trainType = self.LearningType.ADALINE
+
+
+
+
+	
+
+
+	def calWeight(self,weight):
+
+		return weight
+
+
+
 
 
 	def teachLayer(self,layer):
 
+		listOfNeurons=layer.getListOfNeurons()
 
-		pass
+		for n in listOfNeurons:
+			newNeuron= Neuron(n.getNumberOfIn)
+			listOfWeights=[]
+			for w in n.getListOfWeightIn():
+				listOfWeights.append( self.calWeight(w))
+
+			newNeuron.setListOfWeightIn(listOfWeights)
+			newLayer= 
+
+
+
+		return layer
+
+		
 
 
 
@@ -424,7 +458,7 @@ class Trainer:
 				result=neuralNet.compute()
 				
 
-				print str(epochs)+" "+str(result)
+				print "epochs: "+str(epochs)+" result:  "+str(result)
 				#error
 				
 				self.error=  LA.norm( (np.array(result)-np.array(setY[indexY])) )
@@ -432,16 +466,17 @@ class Trainer:
 				if self.getCurrentError() > self.targetError:
 
 					#input layer
-					#neuralNet.setInputLayer(self.teachLayer(neuralNet.getInputLayer()))
+					neuralNet.setInputLayer(self.teachLayer(neuralNet.getInputLayer()))
 					#output layer
-					#neuralNet.setOutputlayer(self.teachLayer(neuralNet.getOutputlayer()))
+					neuralNet.setOutputlayer(self.teachLayer(neuralNet.getOutputlayer()))
 
 					hiddenColl = neuralNet.getHiddenlayerCollection()
 
 					#hidden layer
-					newHiddenColl = hiddenLayerCollection()
+					newHiddenColl = HiddenLayerCollection()
 					for layer in hiddenColl:	
 						newHiddenColl.append(self.teachLayer(layer))
+
 					neuralNet.setHiddenlayerCollection(newHiddenColl)
 
 
@@ -469,13 +504,15 @@ if __name__ =='__main__':
 	hidden_collection = HiddenLayerCollection()
 	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(3).getLayer())
 	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(1).getLayer())
-
-
+	
 	nn.setHiddenlayerCollection(hidden_collection)
-	#nn.pt()
-	#nn.input([1,2,3,4])
-	#nn.compute()
+	
 
+	'''
+	nn.pt()
+	nn.input([1,2,3])
+	nn.compute()
+	'''
 	trainer = Trainer()
 
 	trainSet = TrainSet()
@@ -484,8 +521,9 @@ if __name__ =='__main__':
 	trainer.setTrainSet(trainSet)
 	trainer.setMaxEpochs(10)
 	trainer.setTargetError(1.0)
+	trainer.setTrainType("PERCEPTRON")
 	trainer.train(nn)
-
+	
 
 
 
