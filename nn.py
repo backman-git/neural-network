@@ -1,3 +1,17 @@
+'''
+Author: Backman
+email: backman.only@gmail.com
+
+Issue:
+	1. Don't know how to define the direction/sign of error (vector)
+	2. Neuron compute logic should be inside Neuron class
+	3. Neuron should not auto gen weight every time
+
+
+
+
+
+'''
 import random
 from enum import Enum
 import numpy as np
@@ -7,7 +21,9 @@ import math
 
 
 
-
+class LearningType(Enum):
+		PERCEPTRON =0
+		ADALINE =1
 
 
 def linearFunction(v):
@@ -29,12 +45,25 @@ class Neuron:
 		self.listOfWeightIn=[]
 		self.Afunction=linearFunction
 		self.numberOfIn = numberOfIn
+
 		
 		for i in range(numberOfIn):
 			#r=random.random()
 			r=1.0
 			self.listOfWeightIn.append(r)
 		
+
+	
+	
+		
+
+
+
+	def setListOfInput(self,inputs):
+		self.ListOfInput=inputs
+
+	def getListOfInput(self):
+		return self.ListOfInput
 
 	def getNumberOfIn(self):
 		return self.numberOfIn
@@ -265,19 +294,22 @@ class NeuralNet:
 #inputLayer
 		
 		inputListNeuron=self.inputLayer.getListOfNeurons()
+
 		vector=[]
+		idx=0
 		for n in inputListNeuron:
+			n.setListOfInput(self.inputVector[idx])
+			idx+=1
 			vector.append(n.getListOfWeightIn())
+
+
 		vector= list(np.array(vector).flatten())
 		inputLayerRes=list(np.array(self.inputVector)*np.array(vector))
 
 
-		print "\ninputvector"
-		print self.inputVector
-		print "\ninputlayer"
-		print vector
-		print "\n==inputlayer result=="
-		print inputLayerRes
+	
+		print "inputlayer: " + str(vector)
+		print "inputlayer result: "+str(inputLayerRes)
 
 
 # hidden layer
@@ -287,7 +319,9 @@ class NeuralNet:
 			neurons=obj.getListOfNeurons()
 			computeResV=[]
 			for n in neurons:
-				#netValue
+
+				n.setListOfInput(hiddenComputeV)
+				#netValue  may put to class Neuron
 				neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 				#activeFunction
 				aFunc=n.getActiveFunction()
@@ -297,13 +331,15 @@ class NeuralNet:
 
 			hiddenComputeV=computeResV[:]
 
-		print "\n=== hidden layer result"
-		print hiddenComputeV
+		print "hidden layer result: " + str(hiddenComputeV)
 
 #output layer
 		neurons=self.outputLayer.getListOfNeurons()
 		computeResV=[]
 		for n in neurons:
+
+
+			n.setListOfInput(hiddenComputeV)
 			#netValue
 			neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 			#activeFunction
@@ -311,8 +347,7 @@ class NeuralNet:
 			neuronRes = aFunc(neuronRes)
 
 			computeResV.append(neuronRes)
-		print "\n=== outLayer result==="
-		print computeResV
+		print "outLayer result: "+ str(computeResV)
 
 
 		return computeResV
@@ -352,6 +387,7 @@ class NeuralNet:
 class TrainSet:
 
 	def __init__(self):
+		self.tmpError=0.0
 		pass
 
 	def setX(self,x):
@@ -374,7 +410,7 @@ class Trainer:
 
 	def __init__(self):
 		
-		self.error=0
+		pass	
 
 
 	def setMaxEpochs(self,val):
@@ -395,47 +431,58 @@ class Trainer:
 		return self.error
 
 
-	class LearningType(Enum):
-		PERCEPTRON =0
-		ADALINE =1
+	
 
 	def setTrainType(self,tType):
 
 		if tType =="PERCEPTRON":
-			self.trainType = self.LearningType.PERCEPTRON
+			self.trainType = LearningType.PERCEPTRON
 		elif tType == "ADALINE":
-			self.trainType = self.LearningType.ADALINE
+			self.trainType = LearningType.ADALINE
 
-
+	def setLearningRate(self,v):
+		self.learningRate=v
 
 
 	
 
 
-	def calWeight(self,weight):
-
-		return weight
 
 
 
 
+	def genLearnedNeuron(self,neuron):
 
-	def teachLayer(self,layer):
+		newNeuron = Neuron(neuron.getNumberOfIn())
+		listW=neuron.getListOfWeightIn()
+		listOfIn= neuron.getListOfInput()
+		
+		if self.trainType == LearningType.PERCEPTRON:
+			print "fector: "+str(self.learningRate*self.error*np.array(listOfIn))
+			listW=list((self.learningRate*self.error*np.array(listOfIn))+np.array(listW))
+			
+		elif self.trainType == LearningType.ADALINE:
+			assert True,"ADALINE"
+		else:
+			assert True,"trainType"
+		newNeuron.setListOfWeightIn(listW)
+		return newNeuron
 
+
+
+
+	def genLearnedLayer(self,layer):
+
+
+		newLayer = Layer()
 		listOfNeurons=layer.getListOfNeurons()
-
 		for n in listOfNeurons:
-			newNeuron= Neuron(n.getNumberOfIn)
-			listOfWeights=[]
-			for w in n.getListOfWeightIn():
-				listOfWeights.append( self.calWeight(w))
-
-			newNeuron.setListOfWeightIn(listOfWeights)
-			newLayer= 
+			
+			newLayer.appendNeuron(self.genLearnedNeuron(n))
+			
 
 
-
-		return layer
+		return newLayer
 
 		
 
@@ -453,37 +500,42 @@ class Trainer:
 			indexY=0
 			for vectorX in setX:
 
-				print vectorX
+				print "===========================\n\n"
+
+				print "input: "+str(vectorX)
 				neuralNet.input(vectorX)
 				result=neuralNet.compute()
 				
 
-				print "epochs: "+str(epochs)+" result:  "+str(result)
-				#error
 				
-				self.error=  LA.norm( (np.array(result)-np.array(setY[indexY])) )
-				print self.error
-				if self.getCurrentError() > self.targetError:
+
+
+				#error Issue 1
+				#self.error=  LA.norm( (np.array(result)-np.array(setY[indexY])) )
+				self.error = (np.array(setY[indexY])-np.array(result)).sum()
+
+				print "epochs: "+str(epochs)+" result:  "+str(result)+" tar: "+str(setY[indexY])+" error: "+str(self.error)
+				print "=====\n\n"
+				if abs(self.getCurrentError() > self.targetError):
+
+					print "train!!"
 
 					#input layer
-					neuralNet.setInputLayer(self.teachLayer(neuralNet.getInputLayer()))
+					neuralNet.setInputLayer(self.genLearnedLayer(neuralNet.getInputLayer()))
+
 					#output layer
-					neuralNet.setOutputlayer(self.teachLayer(neuralNet.getOutputlayer()))
+					neuralNet.setOutputlayer(self.genLearnedLayer(neuralNet.getOutputlayer()))
 
 					hiddenColl = neuralNet.getHiddenlayerCollection()
 
 					#hidden layer
 					newHiddenColl = HiddenLayerCollection()
 					for layer in hiddenColl:	
-						newHiddenColl.append(self.teachLayer(layer))
+						newHiddenColl.append(self.genLearnedLayer(layer))
 
 					neuralNet.setHiddenlayerCollection(newHiddenColl)
 
-
-
-
 						
-
 
 				indexY+=1
 
@@ -517,11 +569,12 @@ if __name__ =='__main__':
 
 	trainSet = TrainSet()
 	trainSet.setX([[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,0.0],[1.0,1.0,1.0]])
-	trainSet.setY([0.0,0.0,0.0,1.0])
+	trainSet.setY([[0.0],[0.0],[0.0],[1.0]])
 	trainer.setTrainSet(trainSet)
-	trainer.setMaxEpochs(10)
-	trainer.setTargetError(1.0)
+	trainer.setMaxEpochs(2)
+	trainer.setTargetError(0.35)
 	trainer.setTrainType("PERCEPTRON")
+	trainer.setLearningRate(0.5)
 	trainer.train(nn)
 	
 
