@@ -6,6 +6,7 @@ Issue:
 	1. Don't know how to define the direction/sign of error (vector)
 	2. Neuron compute logic should be inside Neuron class
 	3. Neuron should not auto gen weight every time
+	4. should build a neuron factory
 
 
 
@@ -30,7 +31,11 @@ def linearFunction(v):
 	return v
 
 
-
+def stepFunction(v):
+	if v>0:
+		return 1
+	else :
+		return 0
 
 
 
@@ -40,11 +45,12 @@ def linearFunction(v):
 
 class Neuron:
 
-	def __init__(self,numberOfIn):
+	def __init__(self,numberOfIn,func):
 
 		self.listOfWeightIn=[]
 		self.Afunction=linearFunction
 		self.numberOfIn = numberOfIn
+		self.Afunction=func
 
 		
 		for i in range(numberOfIn):
@@ -203,7 +209,7 @@ class LayerFactory:
 		#build neuronin_layer=InputLayer()
 		listOfNeurons=[]
 		for i in range(self.nNeuron):
-			listOfNeurons.append(Neuron(self.nTipOfNeuron))
+			listOfNeurons.append(Neuron(self.nTipOfNeuron,self.aFunc))
 		
 		if self.typeOfLayer == "input":
 			iLayer =  InputLayer()
@@ -308,7 +314,7 @@ class NeuralNet:
 
 
 	
-		print "inputlayer: " + str(vector)
+		print "inputlayer Weight: " + str(vector)
 		print "inputlayer result: "+str(inputLayerRes)
 
 
@@ -318,13 +324,15 @@ class NeuralNet:
 		for obj in self.hiddenLayerCollection :
 			neurons=obj.getListOfNeurons()
 			computeResV=[]
+			print "hidden layer"
 			for n in neurons:
-
+				print "neuron weight: "+str(n.getListOfWeightIn())
 				n.setListOfInput(hiddenComputeV)
 				#netValue  may put to class Neuron
 				neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 				#activeFunction
 				aFunc=n.getActiveFunction()
+				
 				neuronRes = aFunc(neuronRes)
 				computeResV.append(neuronRes)
 
@@ -344,9 +352,13 @@ class NeuralNet:
 			neuronRes=( np.array(hiddenComputeV)*np.array(n.getListOfWeightIn())).sum()
 			#activeFunction
 			aFunc=n.getActiveFunction()
+			print "------------"+str(neuronRes)
 			neuronRes = aFunc(neuronRes)
-
+			print "------------"+str(neuronRes)
 			computeResV.append(neuronRes)
+
+
+
 		print "outLayer result: "+ str(computeResV)
 
 
@@ -453,7 +465,7 @@ class Trainer:
 
 	def genLearnedNeuron(self,neuron):
 
-		newNeuron = Neuron(neuron.getNumberOfIn())
+		newNeuron = Neuron(neuron.getNumberOfIn(),neuron.getActiveFunction)
 		listW=neuron.getListOfWeightIn()
 		listOfIn= neuron.getListOfInput()
 		
@@ -516,8 +528,8 @@ class Trainer:
 
 				print "epochs: "+str(epochs)+" result:  "+str(result)+" tar: "+str(setY[indexY])+" error: "+str(self.error)
 				print "=====\n\n"
-				if pow (self.getCurrentError(),2) >= pow( self.targetError,2):
 
+				if pow (self.getCurrentError(),2) >= pow( self.targetError,2):
 					print "train!!"
 
 					#input layer
@@ -550,12 +562,13 @@ if __name__ =='__main__':
 	layerFactory = LayerFactory()
 	nn=NeuralNet()
 
-	nn.setInputLayer(layerFactory.type("input").neurons(3).activeFunc(linearFunction).tips(1).getLayer())
-	nn.setOutputlayer(layerFactory.type("output").neurons(1).activeFunc(linearFunction).tips(1).getLayer())
+	nn.setInputLayer(layerFactory.type("input").neurons(3).activeFunc(stepFunction).tips(1).getLayer())
 
 	hidden_collection = HiddenLayerCollection()
 	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(3).getLayer())
-	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(1).getLayer())
+
+	nn.setOutputlayer(layerFactory.type("output").neurons(1).activeFunc(stepFunction).tips(1).getLayer())
+
 	
 	nn.setHiddenlayerCollection(hidden_collection)
 	
@@ -571,14 +584,11 @@ if __name__ =='__main__':
 	trainSet.setX([[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,0.0],[1.0,1.0,1.0]])
 	trainSet.setY([[0.0],[0.0],[0.0],[1.0]])
 	trainer.setTrainSet(trainSet)
-	trainer.setMaxEpochs(3)
-	trainer.setTargetError(0.35)
+	trainer.setMaxEpochs(10)
+	trainer.setTargetError(0.002)
 	trainer.setTrainType("PERCEPTRON")
-	trainer.setLearningRate(0.5)
+	trainer.setLearningRate(0.2)
 	trainer.train(nn)
-	
-
-
 	nn.input([1.0,1.0,1.0])
 	print nn.compute()
 
