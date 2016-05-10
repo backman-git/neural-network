@@ -516,7 +516,7 @@ class Trainer:
 
 				print "epochs: "+str(epochs)+" result:  "+str(result)+" tar: "+str(setY[indexY])+" error: "+str(self.error)
 				print "=====\n\n"
-				if abs(self.getCurrentError() > self.targetError):
+				if pow (self.getCurrentError(),2) >= pow( self.targetError,2):
 
 					print "train!!"
 
@@ -571,12 +571,17 @@ if __name__ =='__main__':
 	trainSet.setX([[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,0.0],[1.0,1.0,1.0]])
 	trainSet.setY([[0.0],[0.0],[0.0],[1.0]])
 	trainer.setTrainSet(trainSet)
-	trainer.setMaxEpochs(2)
+	trainer.setMaxEpochs(3)
 	trainer.setTargetError(0.35)
 	trainer.setTrainType("PERCEPTRON")
 	trainer.setLearningRate(0.5)
 	trainer.train(nn)
 	
+
+
+	nn.input([1.0,1.0,1.0])
+	print nn.compute()
+
 
 
 
