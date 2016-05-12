@@ -54,8 +54,7 @@ class Neuron:
 
 		
 		for i in range(numberOfIn):
-			#r=random.random()
-			r=1.0
+			r=random.random()
 			self.listOfWeightIn.append(r)
 		
 
@@ -465,7 +464,7 @@ class Trainer:
 
 	def genLearnedNeuron(self,neuron):
 
-		newNeuron = Neuron(neuron.getNumberOfIn(),neuron.getActiveFunction)
+		newNeuron = Neuron(neuron.getNumberOfIn(),neuron.getActiveFunction())
 		listW=neuron.getListOfWeightIn()
 		listOfIn= neuron.getListOfInput()
 		
@@ -562,7 +561,7 @@ if __name__ =='__main__':
 	layerFactory = LayerFactory()
 	nn=NeuralNet()
 
-	nn.setInputLayer(layerFactory.type("input").neurons(3).activeFunc(stepFunction).tips(1).getLayer())
+	nn.setInputLayer(layerFactory.type("input").neurons(3).activeFunc(linearFunction).tips(1).getLayer())
 
 	hidden_collection = HiddenLayerCollection()
 	hidden_collection.append(layerFactory.type("hidden").neurons(1).activeFunc(linearFunction).tips(3).getLayer())
@@ -585,12 +584,28 @@ if __name__ =='__main__':
 	trainSet.setY([[0.0],[0.0],[0.0],[1.0]])
 	trainer.setTrainSet(trainSet)
 	trainer.setMaxEpochs(10)
-	trainer.setTargetError(0.002)
+	trainer.setTargetError(0.02)
 	trainer.setTrainType("PERCEPTRON")
-	trainer.setLearningRate(0.2)
+	trainer.setLearningRate(0.3)
 	trainer.train(nn)
+
+	print "======================"
+	print "after training process"
+	print "======================"
+
+
+	nn.input([1.0,0.0,0.0])
+	print "0.0 0.0 0.0: "+str(nn.compute())
+
+	nn.input([1.0,0.0,1.0])
+	print "1.0 0.0 0.0: "+str(nn.compute())
+
+	nn.input([1.0,1.0,0.0])
+	print "1.0 1.0 0.0: "+str(nn.compute())
+
 	nn.input([1.0,1.0,1.0])
-	print nn.compute()
+	print "1.0 1.0 1.0: "+str(nn.compute())
+
 
 
 
